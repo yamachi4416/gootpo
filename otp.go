@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash"
 	"math"
-	"strconv"
 	"time"
 )
 
@@ -34,14 +33,10 @@ func DefaultOpt(seed string) *Opt {
 	}
 }
 
-func genHS(count string, opt *Opt) ([]byte, error) {
+func genHS(count uint64, opt *Opt) ([]byte, error) {
 	c := make([]byte, 8)
 
-	if n, err := strconv.ParseUint(count, 10, 64); err == nil {
-		binary.BigEndian.PutUint64(c, n)
-	} else {
-		return nil, err
-	}
+	binary.BigEndian.PutUint64(c, count)
 
 	seed, err := opt.Decoder(opt.Seed)
 	if err != nil {
@@ -63,7 +58,7 @@ func truncate(hs []byte) int {
 }
 
 // HOTP calculating the HOTP
-func HOTP(count string, opt *Opt) (string, error) {
+func HOTP(count uint64, opt *Opt) (string, error) {
 	hs, err := genHS(count, opt)
 	if err != nil {
 		return "", err
@@ -82,7 +77,7 @@ func TOTP(opt *Opt) (string, error) {
 		n = opt.Now()
 	}
 
-	t := (n - int64(opt.Offset)) / int64(opt.Interval)
+	count := uint64((n - int64(opt.Offset)) / int64(opt.Interval))
 
-	return HOTP(strconv.FormatInt(t, 10), opt)
+	return HOTP(count, opt)
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
+	"errors"
 	"strconv"
 	"testing"
 )
@@ -54,12 +55,13 @@ func getSpec2() [][]string {
 func TestGenHS(t *testing.T) {
 	for _, d := range getSpec1() {
 		count, expected := d[0], d[1]
-		if hs, err := genHS(count, DefaultOpt(Seed16)); err != nil {
+		c, _ := strconv.ParseUint(count, 10, 64)
+		if hs, err := genHS(c, DefaultOpt(Seed16)); err != nil {
 			t.Fatal(err)
 		} else {
 			actual := hex.EncodeToString(hs)
 			if actual != expected {
-				t.Fatal(actual + " is not equal to " + expected)
+				t.Fatalf("%s is not equal to %s", actual, expected)
 			}
 		}
 	}
@@ -68,16 +70,24 @@ func TestGenHS(t *testing.T) {
 func TestHOTP(t *testing.T) {
 	for _, d := range getSpec1() {
 		count, expected := d[0], d[2]
-		if actual, err := HOTP(count, DefaultOpt(Seed16)); err != nil {
+		c, _ := strconv.ParseUint(count, 10, 64)
+		if actual, err := HOTP(c, DefaultOpt(Seed16)); err != nil {
 			t.Fatal(err)
 		} else if actual != expected {
-			t.Fatal(actual + " is not equal to " + expected)
+			t.Fatalf("%s is not equal to %s", actual, expected)
 		}
 	}
 }
 
 func TestHOTPError(t *testing.T) {
-	if _, err := HOTP("_", DefaultOpt(Seed16)); err == nil {
+	opt := DefaultOpt("")
+	opt.Decoder = func(s string) ([]byte, error) {
+		return nil, errors.New("Decoder Error")
+	}
+
+	if _, err := HOTP(0, opt); err == nil {
+		t.Fatal()
+	} else if err.Error() != "Decoder Error" {
 		t.Fatal(err)
 	}
 }
@@ -108,7 +118,7 @@ func TestTOTP(t *testing.T) {
 		if actual, err := TOTP(opt); err != nil {
 			t.Fatal(err)
 		} else if actual != expected {
-			t.Fatal(actual + " is not equal to " + expected)
+			t.Fatalf("%s is not equal to %s", actual, expected)
 		}
 	}
 }
