@@ -1,18 +1,33 @@
 name: ci
+
 on: push
+
+permissions:
+  contents: read
+
 jobs:
   test:
-    strategy:
-      matrix:
-        go-version: ['1.18', '1.19', '1.20']
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Test
-      run: go test ./...
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Check goimports
+        run: test -z "$(gofmt -l .)"
+      - name: Test
+        run: go test ./...
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Test
+        run: go test ./...
