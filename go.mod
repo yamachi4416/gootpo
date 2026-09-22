@@ -1,6 +1,6 @@
 module github.com/yamachi4416/gootpo
 
-go 1.26.0
+go 1.27.1
 
 require golang.org/x/term v0.46.0
 
